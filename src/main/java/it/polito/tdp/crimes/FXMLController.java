@@ -5,8 +5,13 @@
 package it.polito.tdp.crimes;
 
 import java.net.URL;
+import java.time.Month;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.crimes.model.Adiacenze;
+import it.polito.tdp.crimes.model.Event;
 import it.polito.tdp.crimes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -25,10 +30,10 @@ public class FXMLController {
     private URL location;
 
     @FXML // fx:id="boxCategoria"
-    private ComboBox<?> boxCategoria; // Value injected by FXMLLoader
+    private ComboBox<String> boxCategoria; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxMese"
-    private ComboBox<?> boxMese; // Value injected by FXMLLoader
+    private ComboBox<Month> boxMese; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnAnalisi"
     private Button btnAnalisi; // Value injected by FXMLLoader
@@ -43,13 +48,20 @@ public class FXMLController {
     private TextArea txtResult; // Value injected by FXMLLoader
 
     @FXML
-    void doCalcolaPercorso(ActionEvent event) {
-
+    void doCalcolaPercorso(ActionEvent event) { //SECONDO BOTTONE
+    	
+  
     }
 
     @FXML
-    void doCreaGrafo(ActionEvent event) {
-
+    void doCreaGrafo(ActionEvent event) {//PRIMO BOTTONE
+    	this.txtResult.clear();
+    	List<Adiacenze> adiacenze = new ArrayList<>(this.model.generateGraph(this.boxCategoria.getValue(), this.boxMese.getValue()));
+    	this.txtResult.appendText("Grafo creato!\nNumero vertici: "+this.model.getNvertex()+
+    			"\nNumero archi: "+this.model.getNedges()+"\nArchi con peso superiore alla media:\n");
+    	for(Adiacenze a: adiacenze) {
+    		this.txtResult.appendText(a.getReato1()+" "+a.getReato2()+" "+a.getPeso()+"\n");
+    	}
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -60,10 +72,13 @@ public class FXMLController {
         assert boxArco != null : "fx:id=\"boxArco\" was not injected: check your FXML file 'Scene.fxml'.";
         assert btnPercorso != null : "fx:id=\"btnPercorso\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtResult != null : "fx:id=\"txtResult\" was not injected: check your FXML file 'Scene.fxml'.";
-
+        
     }
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.boxCategoria.getItems().addAll(this.model.getAllCategoryCrimes());
+    	this.boxMese.getItems().addAll(this.model.getAllMonths());
+
     }
 }
