@@ -2,16 +2,16 @@ package it.polito.tdp.crimes.db;
 
 import java.sql.Connection;
 
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import it.polito.tdp.crimes.model.Adiacenze;
 import it.polito.tdp.crimes.model.Event;
 
 
@@ -58,7 +58,7 @@ public class EventsDao {
 		}
 	}
 
-	public List<String> getAllCategories() {
+	public List<String> getCategorie() {
 		String sql = "SELECT DISTINCT offense_category_id " + 
 				"FROM events";
 
@@ -86,10 +86,11 @@ public class EventsDao {
 		
 	}
 	
-	public List<Month> getAllMonths() {
-		String sql = "SELECT DISTINCT reported_date as data " + 
+	public List<Integer> getMesi() {
+		String sql = "SELECT DISTINCT MONTH(reported_date) as mese " + 
 				"FROM events";
-		List<Month> list = new ArrayList<>() ;
+		
+		List<Integer> mesi = new ArrayList<>() ;
 		
 		try {
 			Connection conn = DBConnect.getConnection() ;
@@ -99,14 +100,55 @@ public class EventsDao {
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				LocalDateTime data = res.getTimestamp("data").toLocalDateTime();
-				if(!list.contains(data.getMonth())) {
-					list.add(data.getMonth());
-				}
+				
+				mesi.add(res.getInt("mese"));
 				
 			}
 			
-			Collections.sort(list);
+			Collections.sort(mesi);
+			conn.close();
+			return mesi ;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+		
+	}
+
+	//SIMILE A getAllVertices creato da me, ma in forma più smart
+	public List<Adiacenze> getAdiacenze(String categoryCrime, int mese) {
+		String sql = "SELECT e1.offense_type_id AS v1, e2.offense_type_id AS v2, COUNT(DISTINCT e2.neighborhood_id) AS num\n " + 
+				"FROM EVENTS AS e1, events AS e2\n " + 
+				"WHERE e1.offense_category_id = ? AND " + 
+				"e2.offense_category_id= ? AND  " + 
+				"MONTH(e1.reported_date)=? AND " + 
+				"MONTH(e2.reported_date)=? AND " + 
+				"e1.offense_type_id != e2.offense_type_id AND " + 
+				"e1.neighborhood_id = e2.neighborhood_id " + 
+				"GROUP BY e1.offense_type_id, e2.offense_type_id ";
+		
+		List<Adiacenze> list = new ArrayList<>() ;
+		
+		try {
+			Connection conn = DBConnect.getConnection() ;
+
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			
+			st.setString(1, categoryCrime);
+			st.setString(2, categoryCrime);
+			st.setInt(3, mese);
+			st.setInt(4, mese);
+			
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				
+				list.add(new Adiacenze(res.getString("v1"),res.getString("v2"),res.getInt("num")));
+				
+			}
+			
 			conn.close();
 			return list ;
 
@@ -118,6 +160,7 @@ public class EventsDao {
 		
 	}
 	
+	/*
 	public List<String> getAllVertices(String categoryId, Month mese) {
 		
 		String sql = "SELECT DISTINCT offense_type_id " + 
@@ -183,4 +226,5 @@ public class EventsDao {
 			return -1;
 		}
 	}
+	*/
 }

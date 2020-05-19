@@ -5,13 +5,13 @@
 package it.polito.tdp.crimes;
 
 import java.net.URL;
+
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import it.polito.tdp.crimes.model.Adiacenze;
-import it.polito.tdp.crimes.model.Event;
+import it.polito.tdp.crimes.model.Arco;
 import it.polito.tdp.crimes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -39,7 +39,7 @@ public class FXMLController {
     private Button btnAnalisi; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxArco"
-    private ComboBox<?> boxArco; // Value injected by FXMLLoader
+    private ComboBox<Arco> boxArco; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnPercorso"
     private Button btnPercorso; // Value injected by FXMLLoader
@@ -50,18 +50,50 @@ public class FXMLController {
     @FXML
     void doCalcolaPercorso(ActionEvent event) { //SECONDO BOTTONE
     	
-  
+    	this.txtResult.clear();
+    	Arco a = this.boxArco.getValue();
+    	if(a==null) {
+    		this.txtResult.appendText("Seleziona un arco!");
+    		return;
+    	}
+    	
+    	List<String> percorso = this.model.trovaPercorsi(a.getReato1(), a.getReato2());
+    	for(String p: percorso) {
+    		this.txtResult.appendText(p+"\n");
+    	}
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {//PRIMO BOTTONE
+    	
+    	
     	this.txtResult.clear();
-    	List<Adiacenze> adiacenze = new ArrayList<>(this.model.generateGraph(this.boxCategoria.getValue(), this.boxMese.getValue()));
-    	this.txtResult.appendText("Grafo creato!\nNumero vertici: "+this.model.getNvertex()+
-    			"\nNumero archi: "+this.model.getNedges()+"\nArchi con peso superiore alla media:\n");
-    	for(Adiacenze a: adiacenze) {
-    		this.txtResult.appendText(a.getReato1()+" "+a.getReato2()+" "+a.getPeso()+"\n");
+    	String categoria = this.boxCategoria.getValue();
+    	if(categoria==null) {
+    		this.txtResult.appendText("Seleziona categoria!");
+    		return;
     	}
+    	
+    	Month m = this.boxMese.getValue();
+    	if(m==null) {
+    		this.txtResult.appendText("Seleziona mese!");
+    		return;
+    	}
+    	
+    	Integer mese = m.getValue();
+    	
+    	
+    	this.model.generateGraph(categoria, mese);
+    	this.txtResult.appendText("Grafo creato!\nNumero vertici: "+this.model.getNvertex()+
+    			"\nNumero archi: "+this.model.getNedges()+"\n");
+    	
+    	List<Arco> archi = this.model.getArchi();
+    	this.txtResult.appendText("Archi con peso sup. alla media:\n");
+    	for(Arco a: archi) {
+    		this.txtResult.appendText(a.getReato1()+"-"+a.getReato2()+", peso: "+a.getPeso()+"\n");
+    	}
+    	
+    	this.boxArco.getItems().addAll(archi);
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -77,8 +109,12 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
-    	this.boxCategoria.getItems().addAll(this.model.getAllCategoryCrimes());
-    	this.boxMese.getItems().addAll(this.model.getAllMonths());
+    	this.boxCategoria.getItems().addAll(this.model.getCategorie());
+    	List<Month> mesi = new ArrayList<>();
+    	for(Integer i: this.model.getMesi()) {
+    		mesi.add(Month.of(i));
+    	}
+    	this.boxMese.getItems().addAll(mesi);
 
     }
 }
